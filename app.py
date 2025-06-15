@@ -48,14 +48,23 @@ def callback():
 
 @line_handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    user_text = event.message.text  # 取得使用者傳來的文字
+
+    # 根據使用者輸入決定回覆的文字
+    if user_text.lower() == "hi":
+        reply_text = "hello"
+    else:
+        reply_text = "你說的是：" + user_text
+
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
-                messages=[TextMessage(text=event.message.text)]
+                messages=[TextMessage(text=reply_text)]
             )
         )
+
 
 if __name__ == "__main__":
     app.run()
