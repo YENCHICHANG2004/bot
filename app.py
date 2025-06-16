@@ -44,7 +44,7 @@ def handle_message(event):
     if user_text.startswith("天氣 "):
         parts = user_text[3:].split()
         city = parts[0]
-        city = resolve_city_name(city)  # ⭐ 轉換為英文與國家代碼格式
+        city = resolve_city_name(city)
         date_str = None
 
         if len(parts) > 1:
@@ -78,9 +78,23 @@ def send_reply(token, message):
 
 
 def resolve_city_name(city_name):
-    """
-    使用 OpenWeatherMap 的 Geo API，把中/英文城市名稱轉為標準格式（例如 "Taipei,TW"）
-    """
+    # 台灣常見城市對應（避免被判成中國）
+    PREFERRED_LOCATIONS = {
+        "台北": "Taipei,TW",
+        "台中": "Taichung,TW",
+        "台南": "Tainan,TW",
+        "高雄": "Kaohsiung,TW",
+        "桃園": "Taoyuan,TW",
+        "新竹": "Hsinchu,TW",
+        "台東": "Taitung,TW",
+        "花蓮": "Hualien,TW",
+        "基隆": "Keelung,TW",
+    }
+
+    if city_name in PREFERRED_LOCATIONS:
+        return PREFERRED_LOCATIONS[city_name]
+
+    # 否則使用 OpenWeatherMap Geo API 查詢
     url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=1&appid={WEATHER_API_KEY}"
     try:
         res = requests.get(url)
@@ -91,6 +105,7 @@ def resolve_city_name(city_name):
             return f"{name},{country}"
     except:
         pass
+
     return city_name
 
 
@@ -127,5 +142,6 @@ def get_weather_forecast(city, target_date=None):
 
 if __name__ == "__main__":
     app.run()
+
 
 
