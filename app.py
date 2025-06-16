@@ -44,6 +44,7 @@ def handle_message(event):
     if user_text.startswith("天氣 "):
         parts = user_text[3:].split()
         city = parts[0]
+        city = resolve_city_name(city)  # ⭐ 轉換為英文與國家代碼格式
         date_str = None
 
         if len(parts) > 1:
@@ -76,13 +77,30 @@ def send_reply(token, message):
         )
 
 
+def resolve_city_name(city_name):
+    """
+    使用 OpenWeatherMap 的 Geo API，把中/英文城市名稱轉為標準格式（例如 "Taipei,TW"）
+    """
+    url = f"http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=1&appid={WEATHER_API_KEY}"
+    try:
+        res = requests.get(url)
+        data = res.json()
+        if res.status_code == 200 and data:
+            name = data[0]["name"]
+            country = data[0].get("country", "")
+            return f"{name},{country}"
+    except:
+        pass
+    return city_name
+
+
 def get_weather_forecast(city, target_date=None):
     url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={WEATHER_API_KEY}&units=metric&lang=zh_tw"
     try:
         response = requests.get(url)
         data = response.json()
 
-        if response.status_code != 200:
+        if response.status_code != 200 or "list" not in data:
             return f"查不到「{city}」的天氣資料，請確認地名拼寫。"
 
         forecast_list = data["list"]
@@ -109,4 +127,5 @@ def get_weather_forecast(city, target_date=None):
 
 if __name__ == "__main__":
     app.run()
+
 
